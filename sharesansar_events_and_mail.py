@@ -24,11 +24,11 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 # ----------------- CONFIG -----------------
-# NPT = UTC+5:45. Compute "today" in Nepal time, then look 3 days ahead.
+# NPT = UTC+5:45. Compute "today" in Nepal time, then look 3 days before
 NPT = timezone(timedelta(hours=5, minutes=45))
 TODAY_NPT = datetime.now(NPT).replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
 START_DATE = TODAY_NPT - timedelta(days=3)
-NUM_DAYS = 1
+NUM_DAYS = 3
 SAVE_DIR = tempfile.gettempdir()      # runner temp; file only lives in the email
 ALSO_SAVE_CSV = False
 
