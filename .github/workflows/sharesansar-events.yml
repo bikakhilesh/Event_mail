@@ -2,9 +2,9 @@ name: sharesansar-events
 
 on:
   schedule:
-        # 06:00 NPT = 00:15 UTC (NPT = UTC+5:45). Mon-Fri only.
+    # 05:00 NPT = 23:15 UTC previous day (NPT = UTC+5:45). Mon-Fri only.
     # NOTE: GitHub cron is best-effort and may fire a few minutes late.
-        - cron: '15 0 * * 1-5'
+      - cron: '15 23 * * 0-4'
   workflow_dispatch:        # manual run button in the Actions tab
 
 jobs:
