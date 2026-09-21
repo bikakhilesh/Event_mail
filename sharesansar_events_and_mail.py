@@ -89,7 +89,7 @@ def scrape():
 # ---------- Clean, classify, dedupe ----------
 # First match wins, so order matters (e.g. Book Closure before AGM/Dividend).
 TYPE_RULES = [
-    ("Book Closure", r"book\s*c?lo[sc]"),   # also typos "Book losure", "Book Clocure"
+    ("Book Closure", r"bl?ook\s*c?lo[sc]"),   # also typos "Book losure", "Book Clocure", "Blook Close"
     ("AGM", r"(?<![a-z])agm(?![a-z])|annual general meeting|[बव]ा\S*क साधारण"),
     ("SGM", r"(?<![a-z])(sgm|egm|eogm)(?![a-z])|s\.g\.m|spe\w*ial\s+general|extra\s*-?ordinary general|"
             r"विशेष साधारण सभा"),
@@ -118,7 +118,7 @@ TYPE_RULES = [
                          r"governance report"),
     ("Credit Rating", r"\brating"),
     ("RTS/Registrar", r"\brts\b|registrar|share register|रजिष्टर|\bisin\b"),
-    ("Auditor", r"\bauditor\b(?!\s*committee)|लेखा ?पर[ीि]क्षक"),
+    ("Auditor", r"\baudi?t?ors?\b(?!\s*committee)|statutory audit|लेखा ?पर[ीि]क्षक"),   # also "Audior"
     ("Office Relocation", r"relocat|address change|registered (address|office)|office transfer|"
                           r"transfer of .*office|name and address"),
     ("Ownership Structure", r"ownership|share ratio|संरचना"),
@@ -147,7 +147,33 @@ MEETING_SUBTYPES = [
     ("Notice", r"notice|announce|intimation|agenda|\bcall|declar|decler|\bdate\b|fixed|organi[sz]|सूचना|बस्ने"),
     ("Meeting Day", r"(agm|sgm|egm|general meeting) of\b"),   # calendar entry: "17th AGM of X Ltd."
 ]
+# Board/Management: "<role> <action>" when a title names both, else the role or action alone.
+BOARD_ROLES = [
+    ("CEO/Exec", r"\bceo\b|dceo|chief executive|executive director|\bmd\b|managing director|general manager|"
+                 r"प्रबन्धक|कार्यकारी अधिकृत"),
+    ("Chairman", r"chair|अध्यक्ष|adhakchh"),
+    ("Secretary", r"secr[ea]t|सचि[वब]"),
+    ("Director", r"director|directos|(?<![a-z])bods?(?![a-z])|board|sanchalak|सञ्चालक|संचालक"),   # "Nepal_BOD"
+]
+BOARD_ACTIONS = [
+    ("Resignation", r"resign|regisn|resigation|\breign|terminat|discontinu|call back|retire|removal|"
+                    r"राजीनामा|राजिनामा"),
+    ("Tenure", r"tenure|tenture|period|extension|contract|renew|expir|complet"),
+    ("Appointment", r"app?[oiu]{1,3}n|nominat|elect|oath|sapath|assum|welcom|\bnew\b|back to role|replace|chang|"
+                    r"formation|reconstitut|reform|designation|responsibilit|acting|नियु|नियू|मनोनयन|परिवर्तन|"
+                    r"पुनर्गठन|जिम्मेवारी|कायममुकायम|कार्यवाहक"),   # appoint + typos "Appiontment", "Apponited"
+]
+
 SUBTYPE_RULES = {
+    "Board/Management": [
+        ("Death/Vacancy", r"death|demise|vacan|रिक्त"),
+        ("Committee", r"committee|लेखापरिक्षण समिति"),
+        *[(f"{role} {act}", rf"^(?=.*(?:{role_pat}))(?=.*(?:{act_pat}))")
+          for role, role_pat in BOARD_ROLES for act, act_pat in BOARD_ACTIONS],
+        ("Board Meeting", r"meeting|बैठक|decision"),
+        *BOARD_ROLES,
+        *BOARD_ACTIONS,
+    ],
     "AGM": MEETING_SUBTYPES,
     "SGM": MEETING_SUBTYPES,
     "Dividend": [
@@ -270,7 +296,7 @@ def export_to_excel(df, path, period_label=""):
                                        horizontal="center" if c in (1, 2, 3, 4) else "left")
         r += 1
 
-    for col, w in {"A": 13, "B": 11, "C": 10, "D": 30, "E": 55, "F": 70}.items():
+    for col, w in {"A": 13, "B": 11, "C": 10, "D": 42, "E": 55, "F": 70}.items():
         ws.column_dimensions[col].width = w
     ws.freeze_panes = f"A{header_row + 1}"
     last_row = r - 1
@@ -315,7 +341,7 @@ def export_to_excel(df, path, period_label=""):
         f.font = base
         rr += 1
 
-    sm.column_dimensions["A"].width = 32
+    sm.column_dimensions["A"].width = 44
     sm.column_dimensions["B"].width = 10
     wb.save(path)
     return path
@@ -380,7 +406,7 @@ def main():
         df.drop(columns=["DateParsed"]).to_csv(out_path.replace(".xlsx", ".csv"), index=False)
 
     by_type = df["Type"].value_counts()
-    type_lines = "\n".join(f"  {t:<30} {c}" for t, c in by_type.items())
+    type_lines = "\n".join(f"  {t:<42} {c}" for t, c in by_type.items())
     subject = f"[ShareSansar Events] {target} — {n} event(s)"
     body = (
         f"Corporate events for {target}\n"
