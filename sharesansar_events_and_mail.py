@@ -87,17 +87,56 @@ def scrape():
 
 
 # ---------- Clean, classify, dedupe ----------
+# First match wins, so order matters (e.g. Book Closure before AGM/Dividend).
 TYPE_RULES = [
     ("Book Closure", r"book\s*clos"),
-    ("AGM", r"\bagm\b"),
-    ("SGM", r"\bsgm\b|special\s+general"),
-    ("IPO", r"\bipo\b"),
+    ("AGM", r"(?<![a-z])agm(?![a-z])|annual general meeting|[बव]ा\S*क साधारण"),
+    ("SGM", r"(?<![a-z])(sgm|egm|eogm)(?![a-z])|s\.g\.m|spe\w*ial\s+general|extra\s*-?ordinary general|"
+            r"विशेष साधारण सभा"),
     ("Auction", r"auction"),
+    ("IPO", r"\bipo\b|\bfpo\b"),
     ("Listing", r"\blisting\b"),
-    ("Dividend", r"dividend"),
-    ("Lock-in", r"lock[- ]?in"),
-    ("Debenture", r"debenture"),
-    ("Board/Management", r"director|chairman|board|secretary|auditor|resignation|appointment|tenure"),
+    ("Right Share", r"rights? share|\bright from\b|issuance of right|हकप्रद"),
+    ("Dividend", r"div[ie]dend|bonus|लाभांश|लाभांस"),
+    ("Preference Share", r"preference share|अग्राधिकार"),
+    ("Lock-in", r"lock[- ]?(in|end)|लक-?ईन"),
+    ("Promoter Conversion", r"conversion"),
+    ("Debenture/Bond", r"debenture|\bbond\b|redemption"),
+    # Generic issue windows (FPI/local/migrant/mutual fund units): after the
+    # specific issue types above so their opening/closing days stay with them.
+    ("IPO", r"opening day|closing day"),
+    ("Suspension/Delisting", r"suspend|delist"),
+    ("Merger/Acquisition", r"merger|मर्जर|\bmou\b|acqui|integration|joint (operation|transaction|banking)|swap ratio"),
+    ("Share Sale", r"sale of shares?|share sal|share sell|शेयर बिक्री"),
+    ("Share Freeze/Pledge", r"rokka|freez|pledge|रोक्का|धितोमा"),
+    ("Price Adjustment", r"price adjust"),
+    ("Commercial Operation", r"commercial operat|\bcod\b|commissioning"),
+    ("Plant/Disaster", r"shut\s*down|resum|stoppage|outage|plant unit|plant (operation|partially)|in operation|"
+                       r"reoperation|force majeure|flood|damage|बाढी|विपत्ति|बिशेष परिस्थिति|विद्युत उत्पादन|"
+                       r"आयोजना बन्द"),
+    ("Financial Report", r"quarter|quaterly|\bqtr\b|financial (report|statement)|annual report|audit report|"
+                         r"governance report"),
+    ("Credit Rating", r"\brating"),
+    ("RTS/Registrar", r"\brts\b|registrar|share register|रजिष्टर|\bisin\b"),
+    ("Auditor", r"\bauditor\b(?!\s*committee)|लेखा ?पर[ीि]क्षक"),
+    ("Office Relocation", r"relocat|address change|registered (address|office)|office transfer|"
+                          r"transfer of .*office|name and address"),
+    ("Ownership Structure", r"ownership|share ratio|संरचना"),
+    ("Board/Management", r"director|chairman|chairperson|board|\bbods?\b|ceo|chief executive|\bmd\b|"
+                         r"secr[ea]t[ao]ry|committee|\belection|resignation|appointment|tenure|nominat|oath|"
+                         r"sapath|personnel|सञ्चालक|संचालक|कार्यकारी अधिकृत|कम्पनी सचि[वब]|अध्यक्ष|"
+                         r"राजीनामा|प्रबन्धक|समिति|adhakchh"),
+    ("Investment/Project", r"investment|financial closure|survey licen|land purchase|corporate guarantee|"
+                           r"new hydropower|solar project"),
+    ("Regulatory/Legal", r"annual fee|नविकरण शुल्क|sebon|\bqiis?\b|बुक बिल्डिङ्ग|बोलपत्र|court|अदालत|"
+                         r"कम्पनी ऐन|जवाफ|\bmoa\b|\baoa\b|लाभ वितरण"),
+    ("Business Operations", r"logo|branch|migration|सम्झौता|agreement|attorney|\bloan\b|security|quotation"),
+    ("Mutual Fund", r"mutual fund|yojana|\bscheme\b|return of equity|maturity"),
+    ("Correction", r"correct"),
+    # Title carries no topic ("Information [X]", "Company News", "MINUTE", bare ticker "MDB [MDB]").
+    ("General Notice", r"^\s*(\d+\w*\s+|regarding |for )?(information|company news|company information|news|"
+                       r"notice|letter|minutes?)\b|information letter|attach|जानकारी|"
+                       r"^\s*[a-z0-9]+\s*(\[[^\]]*\])?\s*$"),
 ]
 
 
