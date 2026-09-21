@@ -89,7 +89,7 @@ def scrape():
 # ---------- Clean, classify, dedupe ----------
 # First match wins, so order matters (e.g. Book Closure before AGM/Dividend).
 TYPE_RULES = [
-    ("Book Closure", r"book\s*clos"),
+    ("Book Closure", r"book\s*c?lo[sc]"),   # also typos "Book losure", "Book Clocure"
     ("AGM", r"(?<![a-z])agm(?![a-z])|annual general meeting|[बव]ा\S*क साधारण"),
     ("SGM", r"(?<![a-z])(sgm|egm|eogm)(?![a-z])|s\.g\.m|spe\w*ial\s+general|extra\s*-?ordinary general|"
             r"विशेष साधारण सभा"),
@@ -139,11 +139,41 @@ TYPE_RULES = [
                        r"^\s*[a-z0-9]+\s*(\[[^\]]*\])?\s*$"),
 ]
 
+# Optional second level, shown as "Type – Subtype". First match wins; no match keeps the plain type.
+MEETING_SUBTYPES = [
+    ("Postponed/Changed", r"postpone|exten[st]ion|change in .*date|reschedul|venue|adjourn|delay|cancel|स्थगित"),
+    ("Minutes/Decisions", r"minute|miunte|decision|report|appoint|elected|निर्णय|माइन्यूट|माइन्युट|काम कारवाही"),
+    ("Completed", r"complet|\bheld\b|successful|conclud|conducted|finished|सम्पन्न"),
+    ("Notice", r"notice|announce|intimation|agenda|\bcall|declar|decler|\bdate\b|fixed|organi[sz]|सूचना|बस्ने"),
+    ("Meeting Day", r"(agm|sgm|egm|general meeting) of\b"),   # calendar entry: "17th AGM of X Ltd."
+]
+SUBTYPE_RULES = {
+    "AGM": MEETING_SUBTYPES,
+    "SGM": MEETING_SUBTYPES,
+    "Dividend": [
+        ("No Dividend", r"\bno\b.*dividend|not (to )?declare"),
+        ("Approval", r"approv|स्वीकृत"),
+        ("Proposed", r"propos|recommend|प्रस्तावित"),
+        ("Bonus Share", r"bonus"),
+        ("Declaration", r"de[cl]{2}[ae]*r|cash dividend"),   # also "Decleration", "Delcaration", "Declration"
+    ],
+    "Book Closure": [
+        ("SGM", r"(?<![a-z])(sgm|egm|eogm)(?![a-z])|special\s+general|extra\s*-?ordinary"),
+        ("AGM", r"(?<![a-z])agm(?![a-z])|annual general|साधारण ?सभा"),
+        ("Right Share", r"\bright"),
+        ("Dividend/Bonus", r"dividend|bonus|लाभांश"),
+        ("Mutual Fund", r"\bfund\b|scheme|yojana|return on"),
+    ],
+}
+
 
 def classify_event(title):
     t = title.lower()
     for label, pat in TYPE_RULES:
         if re.search(pat, t):
+            for sub, sub_pat in SUBTYPE_RULES.get(label, []):
+                if re.search(sub_pat, t):
+                    return f"{label} – {sub}"
             return label
     return "Other"
 
@@ -240,7 +270,7 @@ def export_to_excel(df, path, period_label=""):
                                        horizontal="center" if c in (1, 2, 3, 4) else "left")
         r += 1
 
-    for col, w in {"A": 13, "B": 11, "C": 10, "D": 17, "E": 55, "F": 70}.items():
+    for col, w in {"A": 13, "B": 11, "C": 10, "D": 30, "E": 55, "F": 70}.items():
         ws.column_dimensions[col].width = w
     ws.freeze_panes = f"A{header_row + 1}"
     last_row = r - 1
@@ -285,7 +315,7 @@ def export_to_excel(df, path, period_label=""):
         f.font = base
         rr += 1
 
-    sm.column_dimensions["A"].width = 22
+    sm.column_dimensions["A"].width = 32
     sm.column_dimensions["B"].width = 10
     wb.save(path)
     return path
@@ -350,7 +380,7 @@ def main():
         df.drop(columns=["DateParsed"]).to_csv(out_path.replace(".xlsx", ".csv"), index=False)
 
     by_type = df["Type"].value_counts()
-    type_lines = "\n".join(f"  {t:<18} {c}" for t, c in by_type.items())
+    type_lines = "\n".join(f"  {t:<30} {c}" for t, c in by_type.items())
     subject = f"[ShareSansar Events] {target} — {n} event(s)"
     body = (
         f"Corporate events for {target}\n"
