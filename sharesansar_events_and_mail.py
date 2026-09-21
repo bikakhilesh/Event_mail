@@ -164,16 +164,36 @@ BOARD_ACTIONS = [
                     r"पुनर्गठन|जिम्मेवारी|कायममुकायम|कार्यवाहक"),   # appoint + typos "Appiontment", "Apponited"
 ]
 
+# IPO: "<investor group> <stage>", e.g. "Foreign Migrants Opening". FPO first: FPO titles also say "general public".
+IPO_GROUPS = [
+    ("FPO", r"\bfpo\b"),
+    ("General Public", r"general public"),
+    ("Foreign Migrants", r"foreign|migrant|immigrant"),
+    ("Project Locals", r"locals"),
+    ("Mutual Fund", r"face value each|yojana|\bfund\b|scheme"),
+]
+IPO_STAGES = [
+    ("Opening", r"opening day"),
+    ("Closing", r"closing day"),
+    ("Listing", r"\blisting\b"),
+]
+
+
+def both(firsts, seconds):
+    """Rules labelled "<first> <second>" that match only titles containing both patterns."""
+    return [(f"{a} {b}", rf"^(?=.*(?:{a_pat}))(?=.*(?:{b_pat}))") for a, a_pat in firsts for b, b_pat in seconds]
+
+
 SUBTYPE_RULES = {
     "Board/Management": [
         ("Death/Vacancy", r"death|demise|vacan|रिक्त"),
         ("Committee", r"committee|लेखापरिक्षण समिति"),
-        *[(f"{role} {act}", rf"^(?=.*(?:{role_pat}))(?=.*(?:{act_pat}))")
-          for role, role_pat in BOARD_ROLES for act, act_pat in BOARD_ACTIONS],
+        *both(BOARD_ROLES, BOARD_ACTIONS),
         ("Board Meeting", r"meeting|बैठक|decision"),
         *BOARD_ROLES,
         *BOARD_ACTIONS,
     ],
+    "IPO": [*both(IPO_GROUPS, IPO_STAGES), *IPO_STAGES, *IPO_GROUPS],
     "AGM": MEETING_SUBTYPES,
     "SGM": MEETING_SUBTYPES,
     "Dividend": [

@@ -10,7 +10,7 @@ CASES = {
     "Opening Day of auction of X Life Insurance for 31,588 units promoter shares.": "Auction",
     "Opening Day of ratio 1:1 Right Share of X Hydropower Limited.": "Right Share",
     'Opening Day of (5,00,000 units @ Rs.1000 per unit) "8% X Debenture 2089"': "Debenture/Bond",
-    "Closing Day of 1,00,000 units of X Hydropower Limited to the Foreign Nepalese Immigrants.": "IPO",
+    "Closing Day of 1,00,000 units of X Hydropower Limited to the Foreign Nepalese Immigrants.": "IPO – Foreign Migrants Closing",
     "Dividend Declaration of Preference Share [MBLPNP]": "Dividend – Declaration",
     "Information of termination of CEO of Himalayan Investment Banker Ltd. [HLICF]": "Board/Management – CEO/Exec Resignation",
     "Information Regarding Investment [NRN]": "Investment/Project",
@@ -40,6 +40,13 @@ CASES = {
     "Information Regarding Death Of Director [AKJCL]": "Board/Management – Death/Vacancy",
     "संचालक समितिको बैठक [BEDC]": "Board/Management – Board Meeting",
     "Resignation Letter [KBSH]": "Board/Management – Resignation",
+    "Closing Day of 11,90,640 units IPO shares of Sagar Distillery Limited to the general public.": "IPO – General Public Closing",
+    "Opening Day of 3,50,000 units of Kalanga Hydro Limited to the Foreign Nepalese Immigrants.": "IPO – Foreign Migrants Opening",
+    "Opening Day of 14,00,000 units of Kalanga Hydro Limited to the project-affected locals of Bajhang District.": "IPO – Project Locals Opening",
+    'Closing Day of 100 million units of Rs 10 face value each of "Garima Subarna Yojana".': "IPO – Mutual Fund Closing",
+    "Closing Day of 4,66,817 units FPO shares of Vijaya Laghubitta Bittiya Sanstha Limited to the general public.": "IPO – FPO Closing",
+    "Listing FPO Share of Vijaya laghubitta Bittiya Sanstha Ltd. (VLBS)": "IPO – FPO Listing",
+    "Listing IPO Share of Jhapa Energy Limited (JHAPA)": "IPO – Listing",
     "Something entirely new [ABC]": "Other",
 }
 
