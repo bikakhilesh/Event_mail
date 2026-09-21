@@ -7,7 +7,7 @@ CASES = {
     "NIFRA_AGM [NIFRA]": "AGM",
     "नवौं बार्षिक साधारण सभा सम्बन्धी सूचना [PURE]": "AGM – Notice",
     "BPCL Calls EGM [BPCL]": "SGM – Notice",
-    "Opening Day of auction of X Life Insurance for 31,588 units promoter shares.": "Auction",
+    "Opening Day of auction of X Life Insurance for 31,588 units promoter shares.": "Auction – Promoter Opening",
     "Opening Day of ratio 1:1 Right Share of X Hydropower Limited.": "Right Share",
     'Opening Day of (5,00,000 units @ Rs.1000 per unit) "8% X Debenture 2089"': "Debenture/Bond",
     "Closing Day of 1,00,000 units of X Hydropower Limited to the Foreign Nepalese Immigrants.": "IPO – Foreign Migrants Closing",
@@ -47,6 +47,10 @@ CASES = {
     "Closing Day of 4,66,817 units FPO shares of Vijaya Laghubitta Bittiya Sanstha Limited to the general public.": "IPO – FPO Closing",
     "Listing FPO Share of Vijaya laghubitta Bittiya Sanstha Ltd. (VLBS)": "IPO – FPO Listing",
     "Listing IPO Share of Jhapa Energy Limited (JHAPA)": "IPO – Listing",
+    "Closing Day of auction of Nepal Insurance Company Limited for 4,468.76 units promoter right shares.": "Auction – Promoter Right Closing",
+    "Bid Opening day of Auction of 1,92,574 units of Ordinary Right Shares of Nepal Insurance Company Limited.": "Auction – Ordinary Right Bid Opening",
+    "Opening day of Auction of 2,000 units of Promoter shares of X Hydropower.": "Auction – Promoter Opening",
+    "CUTOFF PRICE - AUCTION SHARE - RS.1.00": "Auction – Cut-off Price",
     "Something entirely new [ABC]": "Other",
 }
 

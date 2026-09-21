@@ -177,6 +177,19 @@ IPO_STAGES = [
     ("Closing", r"closing day"),
     ("Listing", r"\blisting\b"),
 ]
+# Auction: "<share kind> <stage>", e.g. "Promoter Right Bid Opening". Bid Opening before Opening ("Bid Opening Day").
+AUCTION_KINDS = [
+    ("Promoter Right", r"promoter right"),
+    ("Ordinary Right", r"right share"),
+    ("Promoter", r"promoter"),
+]
+AUCTION_STAGES = [
+    ("Bid Opening", r"bid opening"),
+    ("Opening", r"opening day"),
+    ("Closing", r"closing day"),
+    ("Cut-off Price", r"cut-?\s*off"),
+    ("Listing", r"\blisting\b"),
+]
 
 
 def both(firsts, seconds):
@@ -194,6 +207,7 @@ SUBTYPE_RULES = {
         *BOARD_ACTIONS,
     ],
     "IPO": [*both(IPO_GROUPS, IPO_STAGES), *IPO_STAGES, *IPO_GROUPS],
+    "Auction": [*both(AUCTION_KINDS, AUCTION_STAGES), *AUCTION_STAGES, *AUCTION_KINDS],
     "AGM": MEETING_SUBTYPES,
     "SGM": MEETING_SUBTYPES,
     "Dividend": [
