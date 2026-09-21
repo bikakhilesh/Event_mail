@@ -3,7 +3,7 @@
 #
 # Behaviour requested:
 #   * Runs 08:30 NPT, Monday–Friday (scheduled via the workflow cron).
-#   * Scrapes events for the date exactly 3 days from the run date (NUM_DAYS=1).
+#   * Scrapes the NUM_DAYS=3 days starting 3 days before the run date (today-3 .. today-1).
 #   * Emails the formatted .xlsx as an attachment from Gmail to the office acct.
 #
 # Uses plain requests (no Selenium), so it runs fast and reliably on a runner.
@@ -320,20 +320,25 @@ def send_mail(subject, body, attachment_path=None):
 
 def main():
     end_date = START_DATE + timedelta(days=NUM_DAYS - 1)
-    target = START_DATE.strftime("%A, %d %b %Y")
-    print(f"Target event date (today - 3): {target}")
+    target = f"{START_DATE:%a %d %b %Y}"
+    period_label = f"{START_DATE:%B %d, %Y}"
+    file_dates = f"{START_DATE:%Y-%m-%d}"
+    if end_date != START_DATE:
+        target += f" – {end_date:%a %d %b %Y}"
+        period_label += f" – {end_date:%B %d, %Y}"
+        file_dates += f" to {end_date:%Y-%m-%d}"
+    print(f"Target event dates: {target}")
 
     rows = scrape()
     df = build_df(rows)
     n = 0 if df.empty else len(df)
     print(f"Scraped {n} events for {target}")
 
-    period_label = f"{START_DATE:%B %d, %Y}"
-    filename = f"Events {START_DATE:%Y-%m-%d}.xlsx"
+    filename = f"Events {file_dates}.xlsx"
     out_path = os.path.join(SAVE_DIR, filename)
 
     if df.empty:
-        subject = f"[ShareSansar Events] {START_DATE:%Y-%m-%d} — no events"
+        subject = f"[ShareSansar Events] {target} — no events"
         body = (f"No corporate events listed for {target} "
                 f"(checked {datetime.now(NPT):%Y-%m-%d %H:%M} NPT).\n"
                 f"This is normal for holidays/weekends or if ShareSansar hasn't posted yet.")
