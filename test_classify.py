@@ -1,5 +1,14 @@
 # Run: python test_classify.py  — pins the order-sensitive TYPE_RULES cases.
-from sharesansar_events_and_mail import classify_event
+from sharesansar_events_and_mail import classify_event, pick_mailbox
+
+# IMAP LIST output; the Sent/Trash names are localised, so they are found by special-use flag.
+LIST_LINES = [
+    rb'(\HasNoChildren) "/" "INBOX"',
+    rb'(\HasChildren \Noselect) "/" "[Gmail]"',
+    rb'(\HasNoChildren \All) "/" "[Gmail]/All Mail"',
+    rb'(\HasNoChildren \Sent) "/" "[Gmail]/Sent Mail"',
+    rb'(\HasNoChildren \Trash) "/" "[Gmail]/Papierkorb"',
+]
 
 CASES = {
     "Book Closure for 17th AGM and Cash Dividend [XYZ]": "Book Closure – AGM",
@@ -55,6 +64,11 @@ CASES = {
 }
 
 if __name__ == "__main__":
+    assert pick_mailbox(LIST_LINES, r"\Sent") == '"[Gmail]/Sent Mail"'
+    assert pick_mailbox(LIST_LINES, r"\Trash") == '"[Gmail]/Papierkorb"'
+    assert pick_mailbox(LIST_LINES, r"\Drafts") is None
+    assert pick_mailbox(None, r"\Sent") is None
+
     bad = [(t, want, classify_event(t)) for t, want in CASES.items() if classify_event(t) != want]
     for t, want, got in bad:
         print(f"FAIL {t!r}: want {want}, got {got}")

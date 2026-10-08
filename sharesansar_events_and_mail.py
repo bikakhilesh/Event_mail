@@ -12,9 +12,12 @@
 import os
 import re
 import ssl
+import time
+import imaplib
 import smtplib
 import tempfile
 from email.message import EmailMessage
+from email.utils import make_msgid
 from datetime import datetime, timedelta, timezone
 
 import requests
@@ -38,6 +41,7 @@ GMAIL_APP_PW = os.environ.get("GMAIL_APP_PW", "")
 MAIL_TO = os.environ.get("MAIL_TO", "")
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = 465
+IMAP_HOST = "imap.gmail.com"      # used only to bin our own Sent copy after each send
 # -------------------------------------------
 
 # ---------- Scraper (resilient: one bad page won't kill the run) ----------
@@ -381,6 +385,51 @@ def export_to_excel(df, path, period_label=""):
     return path
 
 
+def pick_mailbox(boxes, flag):
+    """Mailbox with the given special-use flag (\\Sent, \\Trash) from IMAP LIST lines.
+
+    Looked up by flag because Gmail localises the names ("[Gmail]/Sent Mail", "[Gmail]/Papierkorb").
+    """
+    for b in boxes or ():
+        line = b.decode(errors="replace") if isinstance(b, bytes) else b
+        flags = line[line.find("(") + 1:line.find(")")]
+        if flag in flags.split():
+            m = re.search(r'("[^"]*"|\S+)\s*$', line)
+            return m.group(1) if m else None
+    return None
+
+
+def trash_sent_copy(message_id, tries=5, delay=3):
+    """Move our own Sent copy to Trash, which Gmail clears after 30 days.
+
+    Gmail files a copy of anything sent through its SMTP server in Sent; adding the Trash
+    label (an IMAP copy) moves it there. Never fails the run: the email is already out.
+    """
+    try:
+        with imaplib.IMAP4_SSL(IMAP_HOST) as im:
+            im.login(GMAIL_USER, GMAIL_APP_PW)
+            boxes = im.list()[1]
+            sent, trash = pick_mailbox(boxes, r"\Sent"), pick_mailbox(boxes, r"\Trash")
+            if not (sent and trash):
+                print("  ! no Sent/Trash mailbox found; sent copy left in place")
+                return
+            im.select(sent)
+            for attempt in range(tries):
+                if attempt:
+                    time.sleep(delay)          # Gmail files the copy a moment after the send
+                nums = im.search(None, "HEADER", "Message-ID", f'"{message_id}"')[1][0].split()
+                if nums:
+                    ids = b",".join(nums)
+                    im.copy(ids, trash)
+                    im.store(ids, "+FLAGS", "\\Deleted")
+                    im.expunge()
+                    print(f"Sent copy moved to Trash ({len(nums)} message(s))")
+                    return
+            print("  ! sent copy not in Sent yet; left in place")
+    except Exception as e:
+        print(f"  ! could not trash sent copy: {e}")
+
+
 def send_mail(subject, body, attachment_path=None):
     if not (GMAIL_USER and GMAIL_APP_PW and MAIL_TO):
         print("Mail skipped: secrets not all set.")
@@ -389,6 +438,7 @@ def send_mail(subject, body, attachment_path=None):
     msg["Subject"] = subject
     msg["From"] = GMAIL_USER
     msg["To"] = MAIL_TO
+    msg["Message-ID"] = make_msgid()      # so we bin our own copy and nothing else
     msg.set_content(body)
 
     if attachment_path and os.path.exists(attachment_path):
@@ -406,6 +456,7 @@ def send_mail(subject, body, attachment_path=None):
         s.login(GMAIL_USER, GMAIL_APP_PW)
         s.send_message(msg)
     print(f"Email sent to {MAIL_TO}")
+    trash_sent_copy(msg["Message-ID"])
 
 
 def main():
